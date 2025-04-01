@@ -1,0 +1,32 @@
+<div *ngIf="displayedHistorial.length > 0; else noHistorial">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Paquete</th>
+          <th>Usuario Nuevo</th>
+          <th>Usuario Antiguo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of displayedHistorial; trackBy: trackByHistorialId">
+          <td>{{ item.fecha | date: 'short' }}</td>
+          <td>{{ item.packet.join(', ') }}</td>
+          <td>{{ item.user_nuevo }}</td>
+          <td>{{ item.user_antiguo.join(', ') }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <ng-template #noHistorial>
+    <div>No hay registros de historial disponibles</div>
+  </ng-template>
+  
+  <mat-paginator
+    [length]="totalItems"
+    [pageSize]="itemsPerPage"
+    [pageSizeOptions]="[5, 10, 20]"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+  

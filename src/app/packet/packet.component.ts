@@ -6,6 +6,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { UserService } from '../services/user.service';
 import { FormsModule } from '@angular/forms';
 import { User } from '../models/user.model';
+import { HistorialService } from '../services/historial.service';
 
 @Component({
   selector: 'app-packet',
@@ -29,6 +30,8 @@ export class PacketComponent implements OnInit{
   }
   packetService = inject(PacketService);
   userService = inject(UserService);
+  historialService = inject(HistorialService);
+
   obtainPackets(): void {
     this.packetService.getPackets(this.currentPage + 1, this.itemsPerPage).subscribe({
       next: (response) => {
@@ -74,20 +77,71 @@ export class PacketComponent implements OnInit{
     this.mostrarModal = true; // Muestra el modal
   }
 
-  search(){
+  search() {
     console.log(this.searchTerm);
-    this.paquetesSeleccionados.map(packet => {
-    this.userService.assignPacketsToUser(this.searchTerm, packet._id).subscribe({
+
+    // Obtener la lista de usuarios
+    this.userService.getUsers().subscribe({
       next: (response) => {
-        console.log('Paquete asignado:', response);
-        alert('Paquete asignado correctamente.');
-        this.mostrarModal = false; // Oculta el modal
+        const users: User[] = response.data; // Extraer el array de usuarios
+        console.log('Lista de usuarios:', users);
+
+        // Procesar los paquetes seleccionados de forma síncrona
+        const paquetesSinUsuario: Packet[] = [];
+
+        this.paquetesSeleccionados.forEach(packet => {
+          // Encuentra todos los usuarios que tienen asignado este paquete
+          const usuarios = users.filter(user => user.packets.includes(packet._id));
+          
+          if (usuarios.length > 0) {
+            // Crear una lista de nombres de usuarios antiguos
+            const usuariosAntiguos = usuarios.map(usuario => usuario.name);
+
+            console.log(`✅ El paquete con ID ${packet._id} pertenece a los usuarios: ${usuariosAntiguos.join(', ')}`);
+
+            // Registrar en el historial
+            this.historialService.añadirHistorial({
+              fecha: new Date().toISOString(),
+              packet: [packet._id],
+              user_nuevo: this.searchTerm,
+              user_antiguo: usuariosAntiguos // Enviar la lista de nombres de usuarios antiguos
+            }).subscribe({
+              next: () => {
+                console.log(`Historial actualizado para el paquete ${packet._id}`);
+              },
+              error: (error) => {
+                console.error(`Error al actualizar el historial para el paquete ${packet._id}:`, error);
+              }
+            });
+          } else {
+            console.log(`❌ El paquete con ID ${packet._id} no tiene un usuario asignado.`);
+            paquetesSinUsuario.push(packet);
+          }
+        });
+
+        // Asignar los paquetes seleccionados al nuevo usuario
+        this.asignarPaquetesAlUsuario();
       },
       error: (error) => {
-        console.error('Error al asignar paquete:', error);
-        alert('Error al asignar paquete.'); // Muestra un mensaje de error
+        console.error('Error al obtener usuarios:', error);
       }
     });
-  });
-}
+  }
+
+  private asignarPaquetesAlUsuario(): void {
+    const asignaciones = this.paquetesSeleccionados.map(packet => {
+      return this.userService.assignPacketsToUser(this.searchTerm, packet._id).toPromise();
+    });
+
+    Promise.all(asignaciones)
+      .then((responses) => {
+        console.log('Todos los paquetes han sido asignados:', responses);
+        alert('Todos los paquetes han sido asignados correctamente.');
+        this.mostrarModal = false; // Oculta el modal
+      })
+      .catch((error) => {
+        console.error('Error al asignar paquetes:', error);
+        alert('Ocurrió un error al asignar algunos paquetes.');
+      });
+  }
 }
