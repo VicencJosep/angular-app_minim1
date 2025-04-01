@@ -1,5 +1,11 @@
 # AngularApp
+#Implementació:
+- L' exercici era fer un historial de canvis, en el cas del nostre projecte he implementat que quan canvies de propietari de paquet l'historial s'actulitzi amb la data en la que s'ha fet el canvi, el nom del nou usuari al que s'ha asignat el paquet, la llista d'antics "destinataris" del paquet i l'objecte del paquet que estem canviant d'usuari.
+- A més a més, he creat un nou component al qual pots accedir quan clickes en el botó "Historial" i que ensenya per pantalla els diferents historials que hi ha a la api.
+#Coses a millorar:
+-Quan envió a la API la llista de usuaris antics, puc veure en la consola del navegadro com les credentials s'envien en el format correccte, tot i això, l'atribut de user_antiguos[] sempre surt buit en la base de dades. Sospito que es un error relacionat amb que el format de les dades en el backend no es el mateix que com les envío en el forntend.
 
+   
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.8.
 
 ## Development server
